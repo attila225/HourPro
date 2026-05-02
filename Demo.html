@@ -1,0 +1,2369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HourPro - Gestion des Heures Enseignants</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0c0f14;
+    --bg-secondary: #12161e;
+    --bg-card: #181d28;
+    --bg-card-hover: #1e2433;
+    --fg: #e8ecf4;
+    --fg-muted: #7a8599;
+    --fg-dim: #4a5568;
+    --accent: #10b981;
+    --accent-glow: rgba(16, 185, 129, 0.15);
+    --accent-strong: #34d399;
+    --accent-secondary: #f59e0b;
+    --danger: #ef4444;
+    --danger-soft: rgba(239, 68, 68, 0.12);
+    --border: #1f2937;
+    --border-light: #2a3344;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.3);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.4);
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5 { font-family: 'Space Grotesk', sans-serif; }
+
+  /* ===== ÉCRAN DE CONNEXION ===== */
+  .login-screen {
+    position: fixed; inset: 0; z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .login-screen.hidden {
+    opacity: 0; transform: scale(1.05); pointer-events: none;
+  }
+
+  .login-bg-pattern {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 600px 400px at 20% 30%, rgba(16,185,129,0.08), transparent),
+      radial-gradient(ellipse 500px 500px at 80% 70%, rgba(245,158,11,0.05), transparent),
+      repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,0.015) 60px, rgba(255,255,255,0.015) 61px),
+      repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.015) 60px, rgba(255,255,255,0.015) 61px);
+  }
+
+  .login-float-orb {
+    position: absolute; border-radius: 50%; filter: blur(80px); animation: orbFloat 8s ease-in-out infinite;
+  }
+  .login-float-orb:nth-child(1) { width: 300px; height: 300px; background: rgba(16,185,129,0.1); top: 10%; left: 15%; }
+  .login-float-orb:nth-child(2) { width: 200px; height: 200px; background: rgba(245,158,11,0.07); bottom: 20%; right: 20%; animation-delay: -3s; }
+
+  @keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(30px, -20px) scale(1.1); }
+  }
+
+  .login-container {
+    position: relative; z-index: 2;
+    width: 420px; max-width: 90vw;
+    animation: loginSlideUp 0.8s ease-out;
+  }
+  @keyframes loginSlideUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .login-logo {
+    text-align: center; margin-bottom: 40px;
+  }
+  .login-logo .icon-wrap {
+    width: 64px; height: 64px; margin: 0 auto 16px;
+    background: linear-gradient(135deg, var(--accent), #059669);
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 32px rgba(16,185,129,0.3);
+  }
+  .login-logo .icon-wrap i { font-size: 28px; color: #fff; }
+  .login-logo h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .login-logo h1 span { color: var(--accent); }
+  .login-logo p { color: var(--fg-muted); font-size: 14px; margin-top: 4px; }
+
+  .login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 36px;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .form-group { margin-bottom: 20px; }
+  .form-group label {
+    display: block; font-size: 13px; font-weight: 500;
+    color: var(--fg-muted); margin-bottom: 8px;
+  }
+  .form-input {
+    width: 100%; padding: 12px 16px; font-size: 15px;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--fg);
+    font-family: 'DM Sans', sans-serif;
+    transition: var(--transition); outline: none;
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .form-input::placeholder { color: var(--fg-dim); }
+
+  .form-select {
+    width: 100%; padding: 12px 16px; font-size: 15px;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--fg);
+    font-family: 'DM Sans', sans-serif;
+    transition: var(--transition); outline: none;
+    cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a8599' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+  .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .form-select option { background: var(--bg-card); color: var(--fg); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 24px; font-size: 14px; font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    border: none; border-radius: var(--radius-sm);
+    cursor: pointer; transition: var(--transition); outline: none;
+    text-decoration: none; white-space: nowrap;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #059669);
+    color: #fff; box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(16,185,129,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    background: var(--bg-secondary); color: var(--fg);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--bg-card-hover); border-color: var(--border-light); }
+
+  .btn-danger {
+    background: var(--danger-soft); color: var(--danger);
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.2); }
+
+  .btn-sm { padding: 8px 14px; font-size: 13px; }
+  .btn-full { width: 100%; }
+
+  .login-hint {
+    text-align: center; margin-top: 20px; font-size: 12px; color: var(--fg-dim);
+  }
+  .login-hint code {
+    background: var(--bg-secondary); padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; color: var(--fg-muted);
+  }
+
+  /* ===== APPLICATION PRINCIPALE ===== */
+  .app-layout {
+    display: flex; height: 100vh; opacity: 0;
+    transition: opacity 0.6s ease 0.3s;
+  }
+  .app-layout.visible { opacity: 1; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 260px; min-width: 260px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    transition: var(--transition);
+    z-index: 100;
+  }
+
+  .sidebar-header {
+    padding: 20px; display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-header .s-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), #059669);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.25);
+  }
+  .sidebar-header .s-icon i { font-size: 18px; color: #fff; }
+  .sidebar-header .s-text h3 { font-size: 16px; font-weight: 700; }
+  .sidebar-header .s-text h3 span { color: var(--accent); }
+  .sidebar-header .s-text p { font-size: 11px; color: var(--fg-dim); }
+
+  .sidebar-nav { flex: 1; padding: 12px; overflow-y: auto; }
+  .nav-section { margin-bottom: 20px; }
+  .nav-section-title {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--fg-dim); padding: 8px 12px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: var(--radius-sm);
+    color: var(--fg-muted); font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: var(--transition);
+    position: relative; margin-bottom: 2px;
+  }
+  .nav-item:hover { color: var(--fg); background: rgba(255,255,255,0.04); }
+  .nav-item.active {
+    color: var(--accent-strong); background: var(--accent-glow);
+  }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 20px; background: var(--accent); border-radius: 0 3px 3px 0;
+  }
+  .nav-item i { width: 20px; text-align: center; font-size: 15px; }
+  .nav-badge {
+    margin-left: auto; background: var(--accent); color: #fff;
+    font-size: 10px; font-weight: 700; padding: 2px 7px;
+    border-radius: 10px; min-width: 20px; text-align: center;
+  }
+  .nav-badge.warning { background: var(--accent-secondary); }
+
+  .sidebar-footer {
+    padding: 16px; border-top: 1px solid var(--border);
+  }
+  .sidebar-user {
+    display: flex; align-items: center; gap: 10px; padding: 8px;
+    border-radius: var(--radius-sm); cursor: pointer;
+    transition: var(--transition);
+  }
+  .sidebar-user:hover { background: rgba(255,255,255,0.04); }
+  .sidebar-user .avatar {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #fff;
+  }
+  .sidebar-user .u-info { flex: 1; }
+  .sidebar-user .u-info .name { font-size: 13px; font-weight: 600; }
+  .sidebar-user .u-info .role { font-size: 11px; color: var(--fg-dim); }
+
+  /* Zone principale */
+  .main-area {
+    flex: 1; display: flex; flex-direction: column; overflow: hidden;
+    background: var(--bg);
+  }
+
+  .topbar {
+    height: 64px; min-height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(12,15,20,0.8);
+    backdrop-filter: blur(12px);
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-left h2 { font-size: 18px; font-weight: 600; }
+  .topbar-left .breadcrumb { font-size: 12px; color: var(--fg-dim); }
+  .topbar-left .breadcrumb span { color: var(--fg-muted); }
+
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .topbar-btn {
+    width: 38px; height: 38px; border-radius: var(--radius-sm);
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    color: var(--fg-muted); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: var(--transition); font-size: 15px;
+    position: relative;
+  }
+  .topbar-btn:hover { color: var(--fg); border-color: var(--border-light); }
+  .topbar-btn .notif-dot {
+    position: absolute; top: 6px; right: 6px;
+    width: 7px; height: 7px; background: var(--danger);
+    border-radius: 50%; border: 2px solid var(--bg-secondary);
+  }
+
+  .acad-year-badge {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; background: var(--accent-glow);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 20px; font-size: 12px; font-weight: 600;
+    color: var(--accent-strong);
+  }
+  .acad-year-badge i { font-size: 11px; }
+
+  /* Contenu principal scrollable */
+  .main-content {
+    flex: 1; overflow-y: auto; padding: 28px;
+    scroll-behavior: smooth;
+  }
+  .main-content::-webkit-scrollbar { width: 6px; }
+  .main-content::-webkit-scrollbar-track { background: transparent; }
+  .main-content::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+  /* Pages */
+  .page { display: none; animation: pageIn 0.4s ease-out; }
+  .page.active { display: block; }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Cartes statistiques */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    transition: var(--transition); position: relative; overflow: hidden;
+  }
+  .stat-card:hover {
+    border-color: var(--border-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+  .stat-card .sc-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; margin-bottom: 14px;
+  }
+  .stat-card .sc-icon.green { background: rgba(16,185,129,0.12); color: var(--accent); }
+  .stat-card .sc-icon.amber { background: rgba(245,158,11,0.12); color: var(--accent-secondary); }
+  .stat-card .sc-icon.red { background: rgba(239,68,68,0.12); color: var(--danger); }
+  .stat-card .sc-icon.blue { background: rgba(59,130,246,0.12); color: #3b82f6; }
+
+  .stat-card .sc-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px; font-weight: 700; margin-bottom: 4px;
+  }
+  .stat-card .sc-label { font-size: 13px; color: var(--fg-muted); }
+  .stat-card .sc-trend {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: 600; margin-top: 8px; padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .stat-card .sc-trend.up { color: var(--accent); background: rgba(16,185,129,0.1); }
+  .stat-card .sc-trend.down { color: var(--danger); background: var(--danger-soft); }
+
+  .stat-card .sc-glow {
+    position: absolute; top: -30px; right: -30px;
+    width: 100px; height: 100px; border-radius: 50%;
+    filter: blur(40px); opacity: 0.15;
+  }
+
+  /* Cartes conteneurs */
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px; border-bottom: 1px solid var(--border);
+  }
+  .card-header h3 { font-size: 15px; font-weight: 600; }
+  .card-body { padding: 20px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
+
+  /* Tableaux */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; padding: 12px 16px; font-size: 11px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--fg-dim); border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 14px 16px; font-size: 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr { transition: var(--transition); }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  }
+  .tag-green { background: rgba(16,185,129,0.12); color: var(--accent); }
+  .tag-amber { background: rgba(245,158,11,0.12); color: var(--accent-secondary); }
+  .tag-red { background: var(--danger-soft); color: var(--danger); }
+  .tag-blue { background: rgba(59,130,246,0.12); color: #3b82f6; }
+  .tag-gray { background: rgba(122,133,153,0.12); color: var(--fg-muted); }
+
+  .hours-bar {
+    width: 80px; height: 6px; background: var(--bg-secondary);
+    border-radius: 3px; overflow: hidden; display: inline-block;
+    vertical-align: middle; margin-left: 8px;
+  }
+  .hours-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+  /* Toolbar de recherche */
+  .toolbar {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .search-box {
+    position: relative; flex: 1; min-width: 200px; max-width: 360px;
+  }
+  .search-box i {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--fg-dim); font-size: 14px;
+  }
+  .search-box input {
+    width: 100%; padding: 10px 14px 10px 40px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--fg);
+    font-size: 14px; font-family: 'DM Sans', sans-serif;
+    outline: none; transition: var(--transition);
+  }
+  .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+  .filter-select {
+    padding: 10px 32px 10px 14px; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--fg); font-size: 14px; font-family: 'DM Sans', sans-serif;
+    outline: none; cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a8599' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+    transition: var(--transition);
+  }
+  .filter-select:focus { border-color: var(--accent); }
+  .filter-select option { background: var(--bg-card); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: var(--transition);
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    width: 520px; max-width: 92vw; max-height: 85vh;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+    transform: scale(0.95) translateY(10px);
+    transition: var(--transition); overflow-y: auto;
+  }
+  .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; border-bottom: 1px solid var(--border);
+  }
+  .modal-header h3 { font-size: 17px; font-weight: 600; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: transparent; border: none; color: var(--fg-muted);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: var(--transition); font-size: 16px;
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.06); color: var(--fg); }
+  .modal-body { padding: 24px; }
+  .modal-footer {
+    padding: 16px 24px; border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; gap: 10px;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* Toast */
+  .toast-container {
+    position: fixed; top: 20px; right: 20px; z-index: 9999;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 20px; border-radius: var(--radius-sm);
+    background: var(--bg-card); border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg); font-size: 14px;
+    animation: toastIn 0.4s ease-out;
+    min-width: 280px;
+  }
+  .toast.success { border-left: 3px solid var(--accent); }
+  .toast.success i { color: var(--accent); }
+  .toast.error { border-left: 3px solid var(--danger); }
+  .toast.error i { color: var(--danger); }
+  .toast.info { border-left: 3px solid #3b82f6; }
+  .toast.info i { color: #3b82f6; }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(40px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .toast.removing {
+    animation: toastOut 0.3s ease-in forwards;
+  }
+  @keyframes toastOut {
+    to { opacity: 0; transform: translateX(40px); }
+  }
+
+  /* Détails enseignant (fiche) */
+  .profile-header {
+    display: flex; align-items: center; gap: 20px;
+    padding: 24px; background: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(245,158,11,0.03));
+    border-bottom: 1px solid var(--border);
+  }
+  .profile-avatar {
+    width: 64px; height: 64px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 700; color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .profile-info h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .profile-meta { display: flex; gap: 16px; flex-wrap: wrap; }
+  .profile-meta span { font-size: 13px; color: var(--fg-muted); display: flex; align-items: center; gap: 6px; }
+
+  .hours-breakdown {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    margin: 20px 0;
+  }
+  .hb-item {
+    text-align: center; padding: 16px; border-radius: var(--radius-sm);
+    background: var(--bg-secondary); border: 1px solid var(--border);
+  }
+  .hb-item .hb-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px; font-weight: 700;
+  }
+  .hb-item .hb-label { font-size: 12px; color: var(--fg-muted); margin-top: 4px; }
+  .hb-item.cm .hb-val { color: #3b82f6; }
+  .hb-item.td .hb-val { color: var(--accent); }
+  .hb-item.tp .hb-val { color: var(--accent-secondary); }
+
+  /* Liste vide */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--fg-dim);
+  }
+  .empty-state i { font-size: 48px; margin-bottom: 16px; display: block; }
+  .empty-state h4 { font-size: 16px; color: var(--fg-muted); margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; }
+
+  /* Paramètres */
+  .settings-section { margin-bottom: 32px; }
+  .settings-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .setting-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .setting-row .sr-label { font-size: 14px; }
+  .setting-row .sr-desc { font-size: 12px; color: var(--fg-dim); margin-top: 2px; }
+  .setting-row input[type="number"] {
+    width: 100px; padding: 8px 12px; background: var(--bg-secondary);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--fg); font-size: 14px; outline: none; text-align: right;
+  }
+  .setting-row input[type="number"]:focus { border-color: var(--accent); }
+
+  /* Animations d'entrée échelonnées */
+  .stagger > * {
+    opacity: 0; transform: translateY(12px);
+    animation: staggerIn 0.4s ease-out forwards;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 0.05s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.1s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.15s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.2s; }
+  .stagger > *:nth-child(5) { animation-delay: 0.25s; }
+  .stagger > *:nth-child(6) { animation-delay: 0.3s; }
+  @keyframes staggerIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Dépassements */
+  .alert-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-radius: var(--radius-sm);
+    background: var(--danger-soft); border: 1px solid rgba(239,68,68,0.15);
+    margin-bottom: 8px; transition: var(--transition);
+  }
+  .alert-row:hover { background: rgba(239,68,68,0.15); }
+  .alert-row i { color: var(--danger); font-size: 16px; }
+  .alert-row .ar-info { flex: 1; }
+  .alert-row .ar-info .name { font-size: 14px; font-weight: 600; }
+  .alert-row .ar-info .detail { font-size: 12px; color: var(--fg-muted); }
+  .alert-row .ar-excess { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; color: var(--danger); }
+
+  /* Journal */
+  .log-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-dot {
+    width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0;
+  }
+  .log-dot.green { background: var(--accent); }
+  .log-dot.amber { background: var(--accent-secondary); }
+  .log-dot.red { background: var(--danger); }
+  .log-dot.blue { background: #3b82f6; }
+  .log-text { font-size: 13px; color: var(--fg-muted); line-height: 1.5; }
+  .log-text strong { color: var(--fg); }
+  .log-time { font-size: 11px; color: var(--fg-dim); margin-top: 2px; }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .hours-breakdown { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .sidebar { position: fixed; left: -260px; height: 100vh; z-index: 200; }
+    .sidebar.mobile-open { left: 0; box-shadow: var(--shadow-lg); }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .topbar { padding: 0 16px; }
+    .main-content { padding: 16px; }
+  }
+
+  /* Animation particules subtiles sur le dashboard */
+  .particles-canvas {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* Progress ring */
+  .progress-ring { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+  .progress-ring svg { transform: rotate(-90deg); }
+  .progress-ring .ring-text {
+    position: absolute; font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px; font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== ÉCRAN DE CONNEXION ===== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-bg-pattern"></div>
+  <div class="login-float-orb"></div>
+  <div class="login-float-orb"></div>
+  <div class="login-container">
+    <div class="login-logo">
+      <div class="icon-wrap"><i class="fas fa-clock"></i></div>
+      <h1>Hour<span>Pro</span></h1>
+      <p>Gestion intelligente des heures enseignants</p>
+    </div>
+    <div class="login-card">
+      <div class="form-group">
+        <label>Identifiant</label>
+        <input type="text" class="form-input" id="loginUser" placeholder="Entrez votre identifiant" value="admin">
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" class="form-input" id="loginPass" placeholder="Entrez votre mot de passe" value="admin">
+      </div>
+      <div class="form-group">
+        <label>Profil</label>
+        <select class="form-select" id="loginRole">
+          <option value="admin">Administrateur</option>
+          <option value="rh">Service RH</option>
+          <option value="enseignant">Enseignant</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="handleLogin()" style="margin-top:8px; padding: 14px;">
+        <i class="fas fa-arrow-right-to-bracket"></i> Se connecter
+      </button>
+    </div>
+    <div class="login-hint">
+      Comptes de test : <code>admin / admin</code> &middot; <code>rh / rh</code> &middot; <code>enseignant / ens</code>
+    </div>
+  </div>
+</div>
+
+<!-- ===== APPLICATION ===== -->
+<div class="app-layout" id="appLayout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="s-icon"><i class="fas fa-clock"></i></div>
+      <div class="s-text">
+        <h3>Hour<span>Pro</span></h3>
+        <p>Gestion des heures</p>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Principal</div>
+        <div class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+          <i class="fas fa-chart-pie"></i> Tableau de bord
+        </div>
+        <div class="nav-item" data-page="enseignants" onclick="navigateTo('enseignants')">
+          <i class="fas fa-users"></i> Enseignants
+          <span class="nav-badge" id="navEnseignantCount">0</span>
+        </div>
+        <div class="nav-item" data-page="matieres" onclick="navigateTo('matieres')">
+          <i class="fas fa-book-open"></i> Matieres
+        </div>
+        <div class="nav-item" data-page="heures" onclick="navigateTo('heures')">
+          <i class="fas fa-calendar-check"></i> Saisie des heures
+        </div>
+      </div>
+      <div class="nav-section" id="navSectionRH">
+        <div class="nav-section-title">Ressources Humaines</div>
+        <div class="nav-item" data-page="depassements" onclick="navigateTo('depassements')">
+          <i class="fas fa-triangle-exclamation"></i> Depassements
+          <span class="nav-badge warning" id="navDepassementCount">0</span>
+        </div>
+        <div class="nav-item" data-page="paiements" onclick="navigateTo('paiements')">
+          <i class="fas fa-file-invoice-dollar"></i> Etats de paiement
+        </div>
+      </div>
+      <div class="nav-section" id="navSectionAdmin">
+        <div class="nav-section-title">Administration</div>
+        <div class="nav-item" data-page="parametres" onclick="navigateTo('parametres')">
+          <i class="fas fa-sliders"></i> Parametres
+        </div>
+        <div class="nav-item" data-page="journal" onclick="navigateTo('journal')">
+          <i class="fas fa-scroll"></i> Journal d'activite
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="handleLogout()">
+        <div class="avatar" id="userAvatar">AD</div>
+        <div class="u-info">
+          <div class="name" id="userName">Administrateur</div>
+          <div class="role" id="userRole">Administrateur</div>
+        </div>
+        <i class="fas fa-right-from-bracket" style="color: var(--fg-dim); font-size: 14px;"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Zone principale -->
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="topbar-btn" onclick="toggleSidebar()" style="display:none;" id="menuBtn">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div>
+          <h2 id="pageTitle">Tableau de bord</h2>
+          <div class="breadcrumb">HourPro <span>/</span> <span id="breadcrumbPage">Accueil</span></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="acad-year-badge">
+          <i class="fas fa-graduation-cap"></i> 2024 - 2025
+        </div>
+        <button class="topbar-btn" onclick="showToast('Aucune nouvelle notification', 'info')">
+          <i class="fas fa-bell"></i>
+          <div class="notif-dot"></div>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+
+      <!-- ===== PAGE: TABLEAU DE BORD ===== -->
+      <section class="page active" id="page-dashboard">
+        <div class="stats-grid stagger" id="dashStats"></div>
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-chart-bar" style="color:var(--accent); margin-right:8px;"></i>Heures par departement</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="chartDept" height="260"></canvas>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:20px;">
+              <div class="card-header">
+                <h3><i class="fas fa-bolt" style="color:var(--accent-secondary); margin-right:8px;"></i>Depassements recents</h3>
+              </div>
+              <div class="card-body" id="dashDepassements" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h3><i class="fas fa-list-check" style="color:#3b82f6; margin-right:8px;"></i>Dernieres activites</h3>
+              </div>
+              <div class="card-body" id="dashLogs" style="max-height: 220px; overflow-y: auto;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top:4px;">
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-chart-line" style="color:var(--accent); margin-right:8px;"></i>Evolution mensuelle</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="chartMonthly" height="200"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-chart-doughnut" style="color:var(--accent-secondary); margin-right:8px;"></i>Repartition CM / TD / TP</h3>
+            </div>
+            <div class="card-body" style="display:flex; align-items:center; justify-content:center;">
+              <canvas id="chartType" height="220" style="max-width:280px;"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PAGE: ENSEIGNANTS ===== -->
+      <section class="page" id="page-enseignants">
+        <div class="toolbar">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Rechercher un enseignant..." id="searchEnseignant" oninput="renderEnseignants()">
+          </div>
+          <select class="filter-select" id="filterDept" onchange="renderEnseignants()">
+            <option value="">Tous les departements</option>
+            <option value="Informatique">Informatique</option>
+            <option value="Mathematiques">Mathematiques</option>
+            <option value="Physique">Physique</option>
+            <option value="Genie Civil">Genie Civil</option>
+            <option value="Economie">Economie</option>
+            <option value="Langues">Langues</option>
+          </select>
+          <select class="filter-select" id="filterStatut" onchange="renderEnseignants()">
+            <option value="">Tous les statuts</option>
+            <option value="Permanent">Permanent</option>
+            <option value="Vacataire">Vacataire</option>
+          </select>
+          <button class="btn btn-primary" onclick="openEnseignantModal()">
+            <i class="fas fa-plus"></i> Ajouter
+          </button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Enseignant</th>
+                  <th>Grade</th>
+                  <th>Statut</th>
+                  <th>Departement</th>
+                  <th>Taux horaire</th>
+                  <th>Heures faites</th>
+                  <th>Heures contrat</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="enseignantsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PAGE: MATIERES ===== -->
+      <section class="page" id="page-matieres">
+        <div class="toolbar">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Rechercher une matiere..." id="searchMatiere" oninput="renderMatieres()">
+          </div>
+          <select class="filter-select" id="filterFiliere" onchange="renderMatieres()">
+            <option value="">Toutes les filieres</option>
+            <option value="Informatique">Informatique</option>
+            <option value="Mathematiques">Mathematiques</option>
+            <option value="Physique">Physique</option>
+            <option value="Genie Civil">Genie Civil</option>
+            <option value="Economie">Economie</option>
+          </select>
+          <button class="btn btn-primary" onclick="openMatiereModal()">
+            <i class="fas fa-plus"></i> Ajouter
+          </button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Intitule</th>
+                  <th>Filiere</th>
+                  <th>Niveau</th>
+                  <th>Volume prevu</th>
+                  <th>Type principal</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="matieresTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PAGE: SAISIE DES HEURES ===== -->
+      <section class="page" id="page-heures">
+        <div class="toolbar">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Filtrer les saisies..." id="searchHeures" oninput="renderHeures()">
+          </div>
+          <select class="filter-select" id="filterHeureType" onchange="renderHeures()">
+            <option value="">Tous les types</option>
+            <option value="CM">CM</option>
+            <option value="TD">TD</option>
+            <option value="TP">TP</option>
+          </select>
+          <button class="btn btn-primary" onclick="openHeureModal()">
+            <i class="fas fa-plus"></i> Nouvelle saisie
+          </button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Enseignant</th>
+                  <th>Matiere</th>
+                  <th>Type</th>
+                  <th>Duree reelle</th>
+                  <th>Heures eq. TD</th>
+                  <th>Salle</th>
+                  <th>Observations</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="heuresTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PAGE: DEPASSEMENTS ===== -->
+      <section class="page" id="page-depassements">
+        <div id="depassementsContent"></div>
+      </section>
+
+      <!-- ===== PAGE: ETATS DE PAIEMENT ===== -->
+      <section class="page" id="page-paiements">
+        <div class="toolbar">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Rechercher..." id="searchPaiement" oninput="renderPaiements()">
+          </div>
+          <button class="btn btn-secondary" onclick="exportPaiementsExcel()">
+            <i class="fas fa-file-excel" style="color: var(--accent);"></i> Export Excel
+          </button>
+          <button class="btn btn-secondary" onclick="exportPaiementsPDF()">
+            <i class="fas fa-file-pdf" style="color: var(--danger);"></i> Export PDF
+          </button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Enseignant</th>
+                  <th>Grade</th>
+                  <th>Heures contrat</th>
+                  <th>Heures normales</th>
+                  <th>Heures complementaires</th>
+                  <th>Taux horaire</th>
+                  <th>Montant HC</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody id="paiementsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PAGE: PARAMETRES ===== -->
+      <section class="page" id="page-parametres">
+        <div class="card">
+          <div class="card-body">
+            <div class="settings-section">
+              <h3><i class="fas fa-coins" style="color:var(--accent-secondary); margin-right:8px;"></i>Taux horaires par grade</h3>
+              <div class="setting-row">
+                <div><div class="sr-label">Assistant</div><div class="sr-desc">Taux horaire de base</div></div>
+                <input type="number" id="tauxAssistant" value="2500" onchange="updateSettings()">
+              </div>
+              <div class="setting-row">
+                <div><div class="sr-label">Maitre-Assistant</div><div class="sr-desc">Taux horaire de base</div></div>
+                <input type="number" id="tauxMaitreAssistant" value="3500" onchange="updateSettings()">
+              </div>
+              <div class="setting-row">
+                <div><div class="sr-label">Professeur</div><div class="sr-desc">Taux horaire de base</div></div>
+                <input type="number" id="tauxProfesseur" value="5000" onchange="updateSettings()">
+              </div>
+              <div class="setting-row">
+                <div><div class="sr-label">Autres</div><div class="sr-desc">Taux horaire de base</div></div>
+                <input type="number" id="tauxAutres" value="2000" onchange="updateSettings()">
+              </div>
+            </div>
+            <div class="settings-section">
+              <h3><i class="fas fa-scale-balanced" style="color:#3b82f6; margin-right:8px;"></i>Equivalences horaires</h3>
+              <div class="setting-row">
+                <div><div class="sr-label">1h CM =</div><div class="sr-desc">Equivalence en heures TD</div></div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <input type="number" id="eqCM" value="1.5" step="0.1" onchange="updateSettings()">
+                  <span style="color:var(--fg-muted); font-size:14px;">h TD</span>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div><div class="sr-label">1h TD =</div><div class="sr-desc">Equivalence en heures TD</div></div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <input type="number" id="eqTD" value="1" step="0.1" onchange="updateSettings()">
+                  <span style="color:var(--fg-muted); font-size:14px;">h TD</span>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div><div class="sr-label">1h TP =</div><div class="sr-desc">Equivalence en heures TD</div></div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <input type="number" id="eqTP" value="0.75" step="0.1" onchange="updateSettings()">
+                  <span style="color:var(--fg-muted); font-size:14px;">h TD</span>
+                </div>
+              </div>
+            </div>
+            <div class="settings-section">
+              <h3><i class="fas fa-clock" style="color:var(--accent); margin-right:8px;"></i>Heures contractuelles</h3>
+              <div class="setting-row">
+                <div><div class="sr-label">Permanent</div><div class="sr-desc">Volume horaire annuel de reference</div></div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <input type="number" id="heuresPermanent" value="350" onchange="updateSettings()">
+                  <span style="color:var(--fg-muted); font-size:14px;">h</span>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div><div class="sr-label">Vacataire</div><div class="sr-desc">Volume horaire annuel de reference</div></div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <input type="number" id="heuresVacataire" value="200" onchange="updateSettings()">
+                  <span style="color:var(--fg-muted); font-size:14px;">h</span>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()">
+              <i class="fas fa-save"></i> Enregistrer les parametres
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PAGE: JOURNAL ===== -->
+      <section class="page" id="page-journal">
+        <div class="card">
+          <div class="card-header">
+            <h3>Historique des actions</h3>
+            <button class="btn btn-secondary btn-sm" onclick="clearLogs()">
+              <i class="fas fa-trash"></i> Vider
+            </button>
+          </div>
+          <div class="card-body" id="journalContent" style="max-height: 600px; overflow-y: auto;"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ===== MODAL: ENSEIGNANT ===== -->
+<div class="modal-overlay" id="modalEnseignant">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalEnseignantTitle">Ajouter un enseignant</h3>
+      <button class="modal-close" onclick="closeModal('modalEnseignant')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ensEditId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" class="form-input" id="ensNom" placeholder="Nom de famille">
+        </div>
+        <div class="form-group">
+          <label>Prenom</label>
+          <input type="text" class="form-input" id="ensPrenom" placeholder="Prenom">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Grade</label>
+          <select class="form-select" id="ensGrade">
+            <option value="Assistant">Assistant</option>
+            <option value="Maitre-Assistant">Maitre-Assistant</option>
+            <option value="Professeur">Professeur</option>
+            <option value="Autres">Autres</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Statut</label>
+          <select class="form-select" id="ensStatut">
+            <option value="Permanent">Permanent</option>
+            <option value="Vacataire">Vacataire</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Departement</label>
+          <select class="form-select" id="ensDept">
+            <option value="Informatique">Informatique</option>
+            <option value="Mathematiques">Mathematiques</option>
+            <option value="Physique">Physique</option>
+            <option value="Genie Civil">Genie Civil</option>
+            <option value="Economie">Economie</option>
+            <option value="Langues">Langues</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Taux horaire (FCFA)</label>
+          <input type="number" class="form-input" id="ensTaux" placeholder="2500">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalEnseignant')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveEnseignant()"><i class="fas fa-check"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: MATIERE ===== -->
+<div class="modal-overlay" id="modalMatiere">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalMatiereTitle">Ajouter une matiere</h3>
+      <button class="modal-close" onclick="closeModal('modalMatiere')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="matEditId">
+      <div class="form-group">
+        <label>Intitule du cours</label>
+        <input type="text" class="form-input" id="matIntitule" placeholder="Ex: Algorithmique avancee">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Filiere</label>
+          <select class="form-select" id="matFiliere">
+            <option value="Informatique">Informatique</option>
+            <option value="Mathematiques">Mathematiques</option>
+            <option value="Physique">Physique</option>
+            <option value="Genie Civil">Genie Civil</option>
+            <option value="Economie">Economie</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Niveau</label>
+          <select class="form-select" id="matNiveau">
+            <option value="L1">L1</option>
+            <option value="L2">L2</option>
+            <option value="L3">L3</option>
+            <option value="M1">M1</option>
+            <option value="M2">M2</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Volume horaire prevu</label>
+          <input type="number" class="form-input" id="matVolume" placeholder="45">
+        </div>
+        <div class="form-group">
+          <label>Type principal</label>
+          <select class="form-select" id="matType">
+            <option value="CM">CM</option>
+            <option value="TD">TD</option>
+            <option value="TP">TP</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalMatiere')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveMatiere()"><i class="fas fa-check"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: SAISIE HEURE ===== -->
+<div class="modal-overlay" id="modalHeure">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalHeureTitle">Nouvelle saisie d'heure</h3>
+      <button class="modal-close" onclick="closeModal('modalHeure')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="heurEditId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Enseignant</label>
+          <select class="form-select" id="heurEnseignant"></select>
+        </div>
+        <div class="form-group">
+          <label>Matiere</label>
+          <select class="form-select" id="heurMatiere"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date du cours</label>
+          <input type="date" class="form-input" id="heurDate">
+        </div>
+        <div class="form-group">
+          <label>Type d'heure</label>
+          <select class="form-select" id="heurType">
+            <option value="CM">CM</option>
+            <option value="TD">TD</option>
+            <option value="TP">TP</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Duree reelle (h)</label>
+          <input type="number" class="form-input" id="heurDuree" placeholder="2" step="0.25" min="0.25">
+        </div>
+        <div class="form-group">
+          <label>Salle</label>
+          <input type="text" class="form-input" id="heurSalle" placeholder="A101">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Observations</label>
+        <input type="text" class="form-input" id="heurObs" placeholder="Optionnel">
+      </div>
+      <div id="heurEqPreview" style="padding:12px; background:var(--bg-secondary); border-radius:8px; border:1px solid var(--border); font-size:14px; color:var(--fg-muted); display:none;">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalHeure')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveHeure()"><i class="fas fa-check"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: DETAIL ENSEIGNANT ===== -->
+<div class="modal-overlay" id="modalDetail">
+  <div class="modal" style="width:640px;">
+    <div class="modal-header">
+      <h3>Fiche enseignant</h3>
+      <button class="modal-close" onclick="closeModal('modalDetail')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div id="modalDetailContent"></div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // ===== DONNEES DE L'APPLICATION =====
+  const APP_KEY = 'hourpro_data';
+
+  // Paramètres par défaut
+  const defaultSettings = {
+    tauxHoraire: { 'Assistant': 2500, 'Maitre-Assistant': 3500, 'Professeur': 5000, 'Autres': 2000 },
+    equivalences: { CM: 1.5, TD: 1, TP: 0.75 },
+    heuresContrat: { 'Permanent': 350, 'Vacataire': 200 }
+  };
+
+  // Données initiales de démonstration
+  const defaultData = {
+    enseignants: [
+      { id: 1, nom: 'Diallo', prenom: 'Amadou', grade: 'Professeur', statut: 'Permanent', departement: 'Informatique', tauxHoraire: 5000 },
+      { id: 2, nom: 'Traore', prenom: 'Fatoumata', grade: 'Maitre-Assistant', statut: 'Permanent', departement: 'Informatique', tauxHoraire: 3500 },
+      { id: 3, nom: 'Konate', prenom: 'Moussa', grade: 'Assistant', statut: 'Vacataire', departement: 'Mathematiques', tauxHoraire: 2500 },
+      { id: 4, nom: 'Sow', prenom: 'Aissatou', grade: 'Professeur', statut: 'Permanent', departement: 'Physique', tauxHoraire: 5000 },
+      { id: 5, nom: 'Ba', prenom: 'Ibrahima', grade: 'Maitre-Assistant', statut: 'Permanent', departement: 'Genie Civil', tauxHoraire: 3500 },
+      { id: 6, nom: 'Camara', prenom: 'Mariam', grade: 'Assistant', statut: 'Vacataire', departement: 'Economie', tauxHoraire: 2500 },
+      { id: 7, nom: 'Diop', prenom: 'Cheikh', grade: 'Professeur', statut: 'Permanent', departement: 'Mathematiques', tauxHoraire: 5000 },
+      { id: 8, nom: 'Ndiaye', prenom: 'Khady', grade: 'Maitre-Assistant', statut: 'Vacataire', departement: 'Informatique', tauxHoraire: 3500 },
+      { id: 9, nom: 'Sy', prenom: 'Oumar', grade: 'Assistant', statut: 'Permanent', departement: 'Langues', tauxHoraire: 2500 },
+      { id: 10, nom: 'Fall', prenom: 'Awa', grade: 'Professeur', statut: 'Permanent', departement: 'Economie', tauxHoraire: 5000 },
+    ],
+    matieres: [
+      { id: 1, intitule: 'Algorithmique avancee', filiere: 'Informatique', niveau: 'L3', volumePrevu: 45, type: 'CM' },
+      { id: 2, intitule: 'Bases de donnees', filiere: 'Informatique', niveau: 'L2', volumePrevu: 40, type: 'CM' },
+      { id: 3, intitule: 'Programmation C', filiere: 'Informatique', niveau: 'L1', volumePrevu: 60, type: 'TP' },
+      { id: 4, intitule: 'Analyse numerique', filiere: 'Mathematiques', niveau: 'L3', volumePrevu: 42, type: 'TD' },
+      { id: 5, intitule: 'Algebre lineaire', filiere: 'Mathematiques', niveau: 'L1', volumePrevu: 48, type: 'CM' },
+      { id: 6, intitule: 'Mecanique quantique', filiere: 'Physique', niveau: 'M1', volumePrevu: 36, type: 'CM' },
+      { id: 7, intitule: 'Resistance des materiaux', filiere: 'Genie Civil', niveau: 'L3', volumePrevu: 45, type: 'TD' },
+      { id: 8, intitule: 'Microeconomie', filiere: 'Economie', niveau: 'L2', volumePrevu: 39, type: 'CM' },
+      { id: 9, intitule: 'Anglais technique', filiere: 'Langues', niveau: 'L1', volumePrevu: 30, type: 'TD' },
+      { id: 10, intitule: 'Intelligence artificielle', filiere: 'Informatique', niveau: 'M2', volumePrevu: 42, type: 'CM' },
+    ],
+    heures: [
+      { id: 1, enseignantId: 1, matiereId: 1, date: '2025-01-08', type: 'CM', duree: 2, salle: 'A101', observations: '' },
+      { id: 2, enseignantId: 1, matiereId: 10, date: '2025-01-10', type: 'CM', duree: 1.5, salle: 'A205', observations: 'Cours magistral' },
+      { id: 3, enseignantId: 2, matiereId: 2, date: '2025-01-09', type: 'CM', duree: 2, salle: 'B302', observations: '' },
+      { id: 4, enseignantId: 2, matiereId: 2, date: '2025-01-14', type: 'TD', duree: 2, salle: 'Labo 1', observations: 'Exercices pratiques' },
+      { id: 5, enseignantId: 3, matiereId: 5, date: '2025-01-11', type: 'TD', duree: 2, salle: 'C104', observations: '' },
+      { id: 6, enseignantId: 3, matiereId: 4, date: '2025-01-15', type: 'TD', duree: 1.5, salle: 'C104', observations: '' },
+      { id: 7, enseignantId: 4, matiereId: 6, date: '2025-01-12', type: 'CM', duree: 2, salle: 'Amphi A', observations: '' },
+      { id: 8, enseignantId: 5, matiereId: 7, date: '2025-01-13', type: 'TD', duree: 2, salle: 'D201', observations: '' },
+      { id: 9, enseignantId: 6, matiereId: 8, date: '2025-01-14', type: 'CM', duree: 1.5, salle: 'E105', observations: '' },
+      { id: 10, enseignantId: 7, matiereId: 5, date: '2025-01-08', type: 'CM', duree: 2, salle: 'Amphi B', observations: '' },
+      { id: 11, enseignantId: 8, matiereId: 3, date: '2025-01-15', type: 'TP', duree: 3, salle: 'Labo Info', observations: 'Travaux pratiques' },
+      { id: 12, enseignantId: 1, matiereId: 1, date: '2025-01-22', type: 'CM', duree: 2, salle: 'A101', observations: '' },
+      { id: 13, enseignantId: 1, matiereId: 10, date: '2025-01-24', type: 'TD', duree: 2, salle: 'Labo 2', observations: '' },
+      { id: 14, enseignantId: 2, matiereId: 2, date: '2025-01-21', type: 'TP', duree: 2, salle: 'Labo 1', observations: '' },
+      { id: 15, enseignantId: 3, matiereId: 5, date: '2025-01-22', type: 'CM', duree: 2, salle: 'C104', observations: '' },
+      { id: 16, enseignantId: 4, matiereId: 6, date: '2025-01-19', type: 'TD', duree: 2, salle: 'Amphi A', observations: '' },
+      { id: 17, enseignantId: 5, matiereId: 7, date: '2025-01-20', type: 'CM', duree: 1.5, salle: 'D201', observations: '' },
+      { id: 18, enseignantId: 9, matiereId: 9, date: '2025-01-16', type: 'TD', duree: 2, salle: 'F301', observations: '' },
+      { id: 19, enseignantId: 10, matiereId: 8, date: '2025-01-17', type: 'CM', duree: 2, salle: 'E105', observations: '' },
+      { id: 20, enseignantId: 1, matiereId: 1, date: '2025-02-05', type: 'CM', duree: 2, salle: 'A101', observations: '' },
+      { id: 21, enseignantId: 1, matiereId: 10, date: '2025-02-07', type: 'CM', duree: 2, salle: 'A205', observations: '' },
+      { id: 22, enseignantId: 2, matiereId: 2, date: '2025-02-04', type: 'CM', duree: 2, salle: 'B302', observations: '' },
+      { id: 23, enseignantId: 2, matiereId: 2, date: '2025-02-11', type: 'TD', duree: 2, salle: 'Labo 1', observations: '' },
+      { id: 24, enseignantId: 8, matiereId: 3, date: '2025-02-12', type: 'TP', duree: 3, salle: 'Labo Info', observations: '' },
+      { id: 25, enseignantId: 3, matiereId: 4, date: '2025-02-10', type: 'TD', duree: 2, salle: 'C104', observations: '' },
+    ],
+    logs: [
+      { id: 1, type: 'green', text: '<strong>Systeme</strong> initialise avec les donnees de demonstration', time: '08/01/2025 08:00' },
+      { id: 2, type: 'blue', text: '<strong>Diallo Amadou</strong> - Saisie de 2h CM en Algorithmique avancee', time: '08/01/2025 10:30' },
+      { id: 3, type: 'blue', text: '<strong>Traore Fatoumata</strong> - Saisie de 2h CM en Bases de donnees', time: '09/01/2025 14:15' },
+    ],
+    settings: defaultSettings,
+    nextId: { enseignant: 11, matiere: 11, heure: 26, log: 4 }
+  };
+
+  // État de l'application
+  let appData;
+  let currentUser = { username: '', role: 'admin', name: 'Administrateur' };
+  let charts = {};
+
+  // ===== CHARGEMENT / SAUVEGARDE =====
+  function loadData() {
+    const saved = localStorage.getItem(APP_KEY);
+    if (saved) {
+      try { appData = JSON.parse(saved); } catch (e) { appData = JSON.parse(JSON.stringify(defaultData)); }
+    } else {
+      appData = JSON.parse(JSON.stringify(defaultData));
+    }
+    // S'assurer que les clés existent
+    if (!appData.settings) appData.settings = JSON.parse(JSON.stringify(defaultSettings));
+    if (!appData.nextId) appData.nextId = { enseignant: 100, matiere: 100, heure: 100, log: 100 };
+  }
+
+  function saveData() {
+    localStorage.setItem(APP_KEY, JSON.stringify(appData));
+  }
+
+  // ===== CONNEXION =====
+  function handleLogin() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    const role = document.getElementById('loginRole').value;
+
+    if (!user || !pass) { showToast('Veuillez remplir tous les champs', 'error'); return; }
+
+    const accounts = {
+      admin: { pass: 'admin', name: 'Administrateur', role: 'admin' },
+      rh: { pass: 'rh', name: 'Service RH', role: 'rh' },
+      enseignant: { pass: 'ens', name: 'Enseignant', role: 'enseignant' }
+    };
+
+    if (accounts[user] && accounts[user].pass === pass) {
+      currentUser = { username: user, role: accounts[user].role, name: accounts[user].name };
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('appLayout').classList.add('visible');
+      setupUIForRole();
+      addLog('green', `<strong>${currentUser.name}</strong> s'est connecte`);
+      refreshAll();
+      setTimeout(() => showToast(`Bienvenue, ${currentUser.name}`, 'success'), 400);
+    } else {
+      showToast('Identifiant ou mot de passe incorrect', 'error');
+    }
+  }
+
+  function handleLogout() {
+    addLog('amber', `<strong>${currentUser.name}</strong> s'est deconnecte`);
+    document.getElementById('appLayout').classList.remove('visible');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    currentUser = { username: '', role: 'admin', name: 'Administrateur' };
+  }
+
+  // Entrée dans le champ mot de passe → touche Entrée
+  document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+  function setupUIForRole() {
+    const r = currentUser.role;
+    document.getElementById('userName').textContent = currentUser.name;
+    document.getElementById('userRole').textContent = { admin: 'Administrateur', rh: 'Service RH', enseignant: 'Enseignant' }[r];
+    document.getElementById('userAvatar').textContent = currentUser.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+
+    // Visibilité des sections de navigation selon le rôle
+    const showRH = (r === 'admin' || r === 'rh');
+    const showAdmin = (r === 'admin');
+    document.getElementById('navSectionRH').style.display = showRH ? '' : 'none';
+    document.getElementById('navSectionAdmin').style.display = showAdmin ? '' : 'none';
+
+    // Pour un enseignant, cacher les boutons d'ajout/modification/suppression
+    const isEnseignant = (r === 'enseignant');
+
+    navigateTo('dashboard');
+  }
+
+  // ===== NAVIGATION =====
+  const pageTitles = {
+    dashboard: 'Tableau de bord', enseignants: 'Enseignants', matieres: 'Matieres',
+    heures: 'Saisie des heures', depassements: 'Depassements', paiements: 'Etats de paiement',
+    parametres: 'Parametres', journal: "Journal d'activite"
+  };
+
+  function navigateTo(page) {
+    // Vérification des permissions
+    if ((page === 'depassements' || page === 'paiements') && currentUser.role === 'enseignant') {
+      showToast('Acces non autorise pour votre profil', 'error'); return;
+    }
+    if ((page === 'parametres' || page === 'journal') && currentUser.role !== 'admin') {
+      showToast('Acces reserve aux administrateurs', 'error'); return;
+    }
+
+    // Mise à jour nav
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+    if (navItem) navItem.classList.add('active');
+
+    // Mise à jour pages
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const pageEl = document.getElementById('page-' + page);
+    if (pageEl) pageEl.classList.add('active');
+
+    document.getElementById('pageTitle').textContent = pageTitles[page] || page;
+    document.getElementById('breadcrumbPage').textContent = pageTitles[page] || page;
+
+    // Fermer sidebar mobile
+    document.getElementById('sidebar').classList.remove('mobile-open');
+
+    // Rafraîchir le contenu de la page
+    switch (page) {
+      case 'dashboard': renderDashboard(); break;
+      case 'enseignants': renderEnseignants(); break;
+      case 'matieres': renderMatieres(); break;
+      case 'heures': renderHeures(); break;
+      case 'depassements': renderDepassements(); break;
+      case 'paiements': renderPaiements(); break;
+      case 'parametres': loadSettings(); break;
+      case 'journal': renderJournal(); break;
+    }
+  }
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+  }
+
+  // ===== UTILITAIRES =====
+  function getEnseignant(id) { return appData.enseignants.find(e => e.id === id); }
+  function getMatiere(id) { return appData.matieres.find(m => m.id === id); }
+
+  function getHeuresEqTD(type, duree) {
+    const eq = appData.settings.equivalences[type] || 1;
+    return +(duree * eq).toFixed(2);
+  }
+
+  function getTotalHeuresEqTD(enseignantId) {
+    return appData.heures
+      .filter(h => h.enseignantId === enseignantId)
+      .reduce((sum, h) => sum + getHeuresEqTD(h.type, h.duree), 0);
+  }
+
+  function getHeuresParType(enseignantId) {
+    const result = { CM: 0, TD: 0, TP: 0 };
+    appData.heures.filter(h => h.enseignantId === enseignantId).forEach(h => {
+      result[h.type] = (result[h.type] || 0) + h.duree;
+    });
+    return result;
+  }
+
+  function getHeuresContrat(enseignant) {
+    return appData.settings.heuresContrat[enseignant.statut] || 350;
+  }
+
+  function getHeuresComplementaires(enseignantId) {
+    const ens = getEnseignant(enseignantId);
+    if (!ens) return 0;
+    const total = getTotalHeuresEqTD(enseignantId);
+    const contrat = getHeuresContrat(ens);
+    return Math.max(0, total - contrat);
+  }
+
+  function getNextId(type) {
+    const id = appData.nextId[type]++;
+    saveData();
+    return id;
+  }
+
+  function formatMoney(amount) {
+    return new Intl.NumberFormat('fr-FR').format(Math.round(amount)) + ' FCFA';
+  }
+
+  function formatDate(dateStr) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  // ===== TOAST =====
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+    toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('removing');
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
+  }
+
+  // ===== MODALS =====
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  // Fermer en cliquant l'overlay
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+  });
+
+  // ===== JOURNAL =====
+  function addLog(type, text) {
+    const now = new Date();
+    const time = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      + ' ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    appData.logs.unshift({ id: getNextId('log'), type, text, time });
+    if (appData.logs.length > 200) appData.logs.length = 200;
+    saveData();
+  }
+
+  // ===== GESTION ENSEIGNANTS =====
+  function openEnseignantModal(editId) {
+    document.getElementById('ensEditId').value = editId || '';
+    document.getElementById('modalEnseignantTitle').textContent = editId ? 'Modifier l\'enseignant' : 'Ajouter un enseignant';
+
+    if (editId) {
+      const ens = getEnseignant(editId);
+      if (!ens) return;
+      document.getElementById('ensNom').value = ens.nom;
+      document.getElementById('ensPrenom').value = ens.prenom;
+      document.getElementById('ensGrade').value = ens.grade;
+      document.getElementById('ensStatut').value = ens.statut;
+      document.getElementById('ensDept').value = ens.departement;
+      document.getElementById('ensTaux').value = ens.tauxHoraire;
+    } else {
+      document.getElementById('ensNom').value = '';
+      document.getElementById('ensPrenom').value = '';
+      document.getElementById('ensGrade').value = 'Assistant';
+      document.getElementById('ensStatut').value = 'Permanent';
+      document.getElementById('ensDept').value = 'Informatique';
+      document.getElementById('ensTaux').value = appData.settings.tauxHoraire['Assistant'] || 2500;
+    }
+    openModal('modalEnseignant');
+  }
+
+  function saveEnseignant() {
+    const nom = document.getElementById('ensNom').value.trim();
+    const prenom = document.getElementById('ensPrenom').value.trim();
+    const grade = document.getElementById('ensGrade').value;
+    const statut = document.getElementById('ensStatut').value;
+    const dept = document.getElementById('ensDept').value;
+    const taux = parseInt(document.getElementById('ensTaux').value) || 0;
+
+    if (!nom || !prenom) { showToast('Le nom et le prenom sont obligatoires', 'error'); return; }
+    if (taux <= 0) { showToast('Le taux horaire doit etre positif', 'error'); return; }
+
+    const editId = document.getElementById('ensEditId').value;
+    if (editId) {
+      const ens = getEnseignant(parseInt(editId));
+      if (ens) {
+        ens.nom = nom; ens.prenom = prenom; ens.grade = grade;
+        ens.statut = statut; ens.departement = dept; ens.tauxHoraire = taux;
+        addLog('amber', `<strong>${nom} ${prenom}</strong> - Profil modifie`);
+        showToast('Enseignant modifie avec succes', 'success');
+      }
+    } else {
+      appData.enseignants.push({ id: getNextId('enseignant'), nom, prenom, grade, statut, departement: dept, tauxHoraire: taux });
+      addLog('green', `<strong>${nom} ${prenom}</strong> - Nouvel enseignant ajoute`);
+      showToast('Enseignant ajoute avec succes', 'success');
+    }
+    saveData();
+    closeModal('modalEnseignant');
+    renderEnseignants();
+    updateNavBadges();
+  }
+
+  function deleteEnseignant(id) {
+    const ens = getEnseignant(id);
+    if (!ens) return;
+    // Vérifier s'il y a des heures saisies
+    const heuresCount = appData.heures.filter(h => h.enseignantId === id).length;
+    if (heuresCount > 0) {
+      showToast(`Impossible : ${heuresCount} saisie(s) d'heures existent pour cet enseignant`, 'error');
+      return;
+    }
+    appData.enseignants = appData.enseignants.filter(e => e.id !== id);
+    addLog('red', `<strong>${ens.nom} ${ens.prenom}</strong> - Enseignant supprime`);
+    saveData();
+    showToast('Enseignant supprime', 'success');
+    renderEnseignants();
+    updateNavBadges();
+  }
+
+  function renderEnseignants() {
+    const search = (document.getElementById('searchEnseignant').value || '').toLowerCase();
+    const filterDept = document.getElementById('filterDept').value;
+    const filterStatut = document.getElementById('filterStatut').value;
+    const isEnseignant = (currentUser.role === 'enseignant');
+
+    let list = appData.enseignants.filter(e => {
+      if (search && !(e.nom.toLowerCase().includes(search) || e.prenom.toLowerCase().includes(search))) return false;
+      if (filterDept && e.departement !== filterDept) return false;
+      if (filterStatut && e.statut !== filterStatut) return false;
+      return true;
+    });
+
+    const tbody = document.getElementById('enseignantsTableBody');
+    if (list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fas fa-users-slash"></i><h4>Aucun enseignant trouve</h4><p>Modifiez vos filtres ou ajoutez un enseignant</p></div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(e => {
+      const total = getTotalHeuresEqTD(e.id);
+      const contrat = getHeuresContrat(e);
+      const pct = Math.min(100, Math.round((total / contrat) * 100));
+      const barColor = pct > 100 ? 'var(--danger)' : pct > 80 ? 'var(--accent-secondary)' : 'var(--accent)';
+      const statutTag = e.statut === 'Permanent' ? 'tag-green' : 'tag-amber';
+      const gradeTag = { 'Professeur': 'tag-blue', 'Maitre-Assistant': 'tag-green', 'Assistant': 'tag-amber', 'Autres': 'tag-gray' }[e.grade] || 'tag-gray';
+      const initials = (e.nom[0] + e.prenom[0]).toUpperCase();
+      const actions = isEnseignant ? `
+        <button class="btn btn-secondary btn-sm" onclick="showEnseignantDetail(${e.id})"><i class="fas fa-eye"></i></button>
+      ` : `
+        <button class="btn btn-secondary btn-sm" onclick="showEnseignantDetail(${e.id})" title="Voir"><i class="fas fa-eye"></i></button>
+        <button class="btn btn-secondary btn-sm" onclick="openEnseignantModal(${e.id})" title="Modifier"><i class="fas fa-pen"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteEnseignant(${e.id})" title="Supprimer"><i class="fas fa-trash"></i></button>
+      `;
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,${gradeTag==='tag-blue'?'#3b82f6,#2563eb':gradeTag==='tag-green'?'#10b981,#059669':gradeTag==='tag-amber'?'#f59e0b,#d97706':'#6b7280,#4b5563'});display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">${initials}</div>
+          <div><div style="font-weight:600;">${e.nom} ${e.prenom}</div></div>
+        </div></td>
+        <td><span class="tag ${gradeTag}">${e.grade}</span></td>
+        <td><span class="tag ${statutTag}">${e.statut}</span></td>
+        <td>${e.departement}</td>
+        <td style="font-family:'Space Grotesk',sans-serif; font-weight:600;">${formatMoney(e.tauxHoraire)}</td>
+        <td><span style="font-family:'Space Grotesk',sans-serif; font-weight:600;">${total}h</span><div class="hours-bar"><div class="hours-bar-fill" style="width:${pct}%; background:${barColor};"></div></div></td>
+        <td style="font-family:'Space Grotesk',sans-serif; color:var(--fg-muted);">${contrat}h</td>
+        <td><div style="display:flex;gap:6px;">${actions}</div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function showEnseignantDetail(id) {
+    const e = getEnseignant(id);
+    if (!e) return;
+    const total = getTotalHeuresEqTD(id);
+    const contrat = getHeuresContrat(e);
+    const hc = getHeuresComplementaires(id);
+    const hpt = getHeuresParType(id);
+    const ensHeures = appData.heures.filter(h => h.enseignantId === id).sort((a, b) => b.date.localeCompare(a.date));
+    const gradeTag = { 'Professeur': 'tag-blue', 'Maitre-Assistant': 'tag-green', 'Assistant': 'tag-amber', 'Autres': 'tag-gray' }[e.grade] || 'tag-gray';
+    const statutTag = e.statut === 'Permanent' ? 'tag-green' : 'tag-amber';
+
+    let html = `
+      <div class="profile-header">
+        <div class="profile-avatar" style="background:linear-gradient(135deg,${gradeTag==='tag-blue'?'#3b82f6,#2563eb':gradeTag==='tag-green'?'#10b981,#059669':gradeTag==='tag-amber'?'#f59e0b,#d97706':'#6b7280,#4b5563'});">
+          ${(e.nom[0] + e.prenom[0]).toUpperCase()}
+        </div>
+        <div class="profile-info">
+          <h2>${e.nom} ${e.prenom}</h2>
+          <div class="profile-meta">
+            <span><span class="tag ${gradeTag}">${e.grade}</span></span>
+            <span><span class="tag ${statutTag}">${e.statut}</span></span>
+            <span><i class="fas fa-building"></i> ${e.departement}</span>
+            <span><i class="fas fa-coins"></i> ${formatMoney(e.tauxHoraire)}/h</span>
+          </div>
+        </div>
+      </div>
+      <div style="padding:20px;">
+        <div class="hours-breakdown">
+          <div class="hb-item cm"><div class="hb-val">${hpt.CM}h</div><div class="hb-label">CM (x${appData.settings.equivalences.CM})</div></div>
+          <div class="hb-item td"><div class="hb-val">${hpt.TD}h</div><div class="hb-label">TD (x${appData.settings.equivalences.TD})</div></div>
+          <div class="hb-item tp"><div class="hb-val">${hpt.TP}h</div><div class="hb-label">TP (x${appData.settings.equivalences.TP})</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:20px;">
+          <div style="text-align:center; padding:14px; background:var(--bg-secondary); border-radius:8px; border:1px solid var(--border);">
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:var(--fg);">${total}h</div>
+            <div style="font-size:12px; color:var(--fg-muted);">Total eq. TD</div>
+          </div>
+          <div style="text-align:center; padding:14px; background:var(--bg-secondary); border-radius:8px; border:1px solid var(--border);">
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:var(--fg-muted);">${contrat}h</div>
+            <div style="font-size:12px; color:var(--fg-muted);">Heures contrat</div>
+          </div>
+          <div style="text-align:center; padding:14px; background:${hc > 0 ? 'var(--danger-soft)' : 'var(--bg-secondary)'}; border-radius:8px; border:1px solid ${hc > 0 ? 'rgba(239,68,68,0.2)' : 'var(--border)'};">
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:${hc > 0 ? 'var(--danger)' : 'var(--accent)'};">${hc}h</div>
+            <div style="font-size:12px; color:var(--fg-muted);">Heures complementaires</div>
+          </div>
+        </div>
+        ${hc > 0 ? `<div style="padding:12px 16px; background:var(--danger-soft); border:1px solid rgba(239,68,68,0.15); border-radius:8px; margin-bottom:20px; font-size:14px;">
+          <i class="fas fa-triangle-exclamation" style="color:var(--danger); margin-right:8px;"></i>
+          Montant heures complementaires : <strong style="color:var(--danger);">${formatMoney(hc * e.tauxHoraire)}</strong>
+        </div>` : ''}
+        <h4 style="font-size:14px; font-weight:600; margin-bottom:12px; color:var(--fg-muted);">Historique des saisies (${ensHeures.length})</h4>`;
+
+    if (ensHeures.length === 0) {
+      html += `<div class="empty-state" style="padding:30px;"><i class="fas fa-calendar-xmark"></i><h4>Aucune saisie</h4></div>`;
+    } else {
+      html += `<div style="max-height:200px; overflow-y:auto;">
+        <table><thead><tr><th>Date</th><th>Matiere</th><th>Type</th><th>Duree</th><th>Eq. TD</th></tr></thead><tbody>`;
+      ensHeures.forEach(h => {
+        const mat = getMatiere(h.matiereId);
+        html += `<tr>
+          <td>${formatDate(h.date)}</td>
+          <td>${mat ? mat.intitule : '-'}</td>
+          <td><span class="tag ${h.type==='CM'?'tag-blue':h.type==='TD'?'tag-green':'tag-amber'}">${h.type}</span></td>
+          <td>${h.duree}h</td>
+          <td style="font-weight:600;">${getHeuresEqTD(h.type, h.duree)}h</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    html += `</div>`;
+    document.getElementById('modalDetailContent').innerHTML = html;
+    openModal('modalDetail');
+  }
+
+  // ===== GESTION MATIERES =====
+  function openMatiereModal(editId) {
+    document.getElementById('matEditId').value = editId || '';
+    document.getElementById('modalMatiereTitle').textContent = editId ? 'Modifier la matiere' : 'Ajouter une matiere';
+    if (editId) {
+      const m = getMatiere(editId);
+      if (!m) return;
+      document.getElementById('matIntitule').value = m.intitule;
+      document.getElementById('matFiliere').value = m.filiere;
+      document.getElementById('matNiveau').value = m.niveau;
+      document.getElementById('matVolume').value = m.volumePrevu;
+      document.getElementById('matType').value = m.type;
+    } else {
+      document.getElementById('matIntitule').value = '';
+      document.getElementById('matFiliere').value = 'Informatique';
+      document.getElementById('matNiveau').value = 'L1';
+      document.getElementById('matVolume').value = '';
+      document.getElementById('matType').value = 'CM';
+    }
+    openModal('modalMatiere');
+  }
+
+  function saveMatiere() {
+    const intitule = document.getElementById('matIntitule').value.trim();
+    const filiere = document.getElementById('matFiliere').value;
+    const niveau = document.getElementById('matNiveau').value;
+    const volume = parseInt(document.getElementById('matVolume').value) || 0;
+    const type = document.getElementById('matType').value;
+
+    if (!intitule) { showToast('L\'intitule est obligatoire', 'error'); return; }
+    if (volume <= 0) { showToast('Le volume horaire doit etre positif', 'error'); return; }
+
+    const editId = document.getElementById('matEditId').value;
+    if (editId) {
+      const m = getMatiere(parseInt(editId));
+      if (m) { m.intitule = intitule; m.filiere = filiere; m.niveau = niveau; m.volumePrevu = volume; m.type = type; }
+      addLog('amber', `Matiere <strong>${intitule}</strong> modifiee`);
+      showToast('Matiere modifiee', 'success');
+    } else {
+      appData.matieres.push({ id: getNextId('matiere'), intitule, filiere, niveau, volumePrevu: volume, type });
+      addLog('green', `Matiere <strong>${intitule}</strong> ajoutee`);
+      showToast('Matiere ajoutee', 'success');
+    }
+    saveData(); closeModal('modalMatiere'); renderMatieres();
+  }
+
+  function deleteMatiere(id) {
+    const m = getMatiere(id);
+    if (!m) return;
+    const heuresCount = appData.heures.filter(h => h.matiereId === id).length;
+    if (heuresCount > 0) { showToast(`Impossible : ${heuresCount} saisie(s) liee(s)`, 'error'); return; }
+    appData.matieres = appData.matieres.filter(mt => mt.id !== id);
+    addLog('red', `Matiere <strong>${m.intitule}</strong> supprimee`);
+    saveData(); showToast('Matiere supprimee', 'success'); renderMatieres();
+  }
+
+  function renderMatieres() {
+    const search = (document.getElementById('searchMatiere').value || '').toLowerCase();
+    const filterFiliere = document.getElementById('filterFiliere').value;
+    const isEnseignant = (currentUser.role === 'enseignant');
+
+    let list = appData.matieres.filter(m => {
+      if (search && !m.intitule.toLowerCase().includes(search)) return false;
+      if (filterFiliere && m.filiere !== filterFiliere) return false;
+      return true;
+    });
+
+    const tbody = document.getElementById('matieresTableBody');
+    if (list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fas fa-book-open"></i><h4>Aucune matiere trouvee</h4></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(m => {
+      const typeTag = { CM: 'tag-blue', TD: 'tag-green', TP: 'tag-amber' }[m.type] || 'tag-gray';
+      const actions = isEnseignant ? '' : `
+        <button class="btn btn-secondary btn-sm" onclick="openMatiereModal(${m.id})"><i class="fas fa-pen"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMatiere(${m.id})"><i class="fas fa-trash"></i></button>
+      `;
+      return `<tr>
+        <td style="font-weight:600;">${m.intitule}</td>
+        <td>${m.filiere}</td>
+        <td><span class="tag tag-gray">${m.niveau}</span></td>
+        <td style="font-family:'Space Grotesk',sans-serif; font-weight:600;">${m.volumePrevu}h</td>
+        <td><span class="tag ${typeTag}">${m.type}</span></td>
+        <td><div style="display:flex;gap:6px;">${actions}</div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ===== GESTION HEURES =====
+  function openHeureModal(editId) {
+    document.getElementById('heurEditId').value = editId || '';
+    document.getElementById('modalHeureTitle').textContent = editId ? 'Modifier la saisie' : 'Nouvelle saisie d\'heure';
+
+    // Remplir les selects
+    const ensSelect = document.getElementById('heurEnseignant');
+    const matSelect = document.getElementById('heurMatiere');
+    ensSelect.innerHTML = appData.enseignants.map(e => `<option value="${e.id}">${e.nom} ${e.prenom}</option>`).join('');
+    matSelect.innerHTML = appData.matieres.map(m => `<option value="${m.id}">${m.intitule} (${m.filiere} - ${m.niveau})</option>`).join('');
+
+    if (editId) {
+      const h = appData.heures.find(hr => hr.id === editId);
+      if (!h) return;
+      ensSelect.value = h.enseignantId;
+      matSelect.value = h.matiereId;
+      document.getElementById('heurDate').value = h.date;
+      document.getElementById('heurType').value = h.type;
+      document.getElementById('heurDuree').value = h.duree;
+      document.getElementById('heurSalle').value = h.salle;
+      document.getElementById('heurObs').value = h.observations;
+    } else {
+      document.getElementById('heurDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('heurType').value = 'CM';
+      document.getElementById('heurDuree').value = '';
+      document.getElementById('heurSalle').value = '';
+      document.getElementById('heurObs').value = '';
+    }
+    updateHeurEqPreview();
+    openModal('modalHeure');
+  }
+
+  function updateHeurEqPreview() {
+    const type = document.getElementById('heurType').value;
+    const duree = parseFloat(document.getElementById('heurDuree').value) || 0;
+    const eq = getHeuresEqTD(type, duree);
+    const preview = document.getElementById('heurEqPreview');
+    if (duree > 0) {
+      preview.style.display = 'block';
+      preview.innerHTML = `<i class="fas fa-calculator" style="color:var(--accent); margin-right:8px;"></i>
+        ${duree}h ${type} x ${appData.settings.equivalences[type]} = <strong style="color:var(--accent);">${eq}h eq. TD</strong>`;
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+  document.getElementById('heurType').addEventListener('change', updateHeurEqPreview);
+  document.getElementById('heurDuree').addEventListener('input', updateHeurEqPreview);
+
+  function saveHeure() {
+    const enseignantId = parseInt(document.getElementById('heurEnseignant').value);
+    const matiereId = parseInt(document.getElementById('heurMatiere').value);
+    const date = document.getElementById('heurDate').value;
+    const type = document.getElementById('heurType').value;
+    const duree = parseFloat(document.getElementById('heurDuree').value) || 0;
+    const salle = document.getElementById('heurSalle').value.trim();
+    const obs = document.getElementById('heurObs').value.trim();
+
+    if (!date) { showToast('La date est obligatoire', 'error'); return; }
+    if (duree <= 0) { showToast('La duree doit etre positive', 'error'); return; }
+
+    const ens = getEnseignant(enseignantId);
+    const mat = getMatiere(matiereId);
+    const editId = document.getElementById('heurEditId').value;
+
+    if (editId) {
+      const h = appData.heures.find(hr => hr.id === parseInt(editId));
+      if (h) {
+        Object.assign(h, { enseignantId, matiereId, date, type, duree, salle, observations: obs });
+        addLog('amber', `<strong>${ens.nom} ${ens.prenom}</strong> - Saisie modifiee : ${duree}h ${type} en ${mat.intitule}`);
+      }
+      showToast('Saisie modifiee', 'success');
+    } else {
+      appData.heures.push({ id: getNextId('heure'), enseignantId, matiereId, date, type, duree, salle, observations: obs });
+      addLog('blue', `<strong>${ens.nom} ${ens.prenom}</strong> - Saisie : ${duree}h ${type} en ${mat.intitule}`);
+      showToast('Saisie enregistree', 'success');
+    }
+    saveData(); closeModal('modalHeure'); renderHeures(); updateNavBadges();
+  }
+
+  function deleteHeure(id) {
+    const h = appData.heures.find(hr => hr.id === id);
+    if (!h) return;
+    const ens = getEnseignant(h.enseignantId);
+    appData.heures = appData.heures.filter(hr => hr.id !== id);
+    addLog('red', `Saisie supprimee pour <strong>${ens ? ens.nom + ' ' + ens.prenom : 'Inconnu'}</strong>`);
+    saveData(); showToast('Saisie supprimee', 'success'); renderHeures(); updateNavBadges();
+  }
+
+  function renderHeures() {
+    const search = (document.getElementById('searchHeures').value || '').toLowerCase();
+    const filterType = document.getElementById('filterHeureType').value;
+    const isEnseignant = (currentUser.role === 'enseignant');
+
+    let list = appData.heures.filter(h => {
+      const ens = getEnseignant(h.enseignantId);
+      const mat = getMatiere(h.matiereId);
+      const searchStr = `${formatDate(h.date)} ${ens ? ens.nom + ' ' + ens.prenom : ''} ${mat ? mat.intitule : ''} ${h.type} ${h.salle} ${h.observations}`.toLowerCase();
+      if (search && !searchStr.includes(search)) return false;
+      if (filterType && h.type !== filterType) return false;
+      return true;
+    }).sort((a, b) => b.date.localeCompare(a.date));
+
+    const tbody = document.getElementById('heuresTableBody');
+    if (list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fas fa-calendar-xmark"></i><h4>Aucune saisie trouvee</h4></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(h => {
+      const ens = getEnseignant(h.enseignantId);
+      const mat = getMatiere(h.matiereId);
+      const typeTag = { CM: 'tag-blue', TD: 'tag-green', TP: 'tag-amber' }[h.type] || 'tag-gray';
+      const eq = getHeuresEqTD(h.type, h.duree);
+      const actions = isEnseignant ? '' : `
+        <button class="btn btn-secondary btn-sm" onclick="openHeureModal(${h.id})"><i class="fas fa-pen"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteHeure(${h.id})"><i class="fas fa-trash"></i></button>
+      `;
+      return `<tr>
+        <td>${formatDate(h.date)}</td>
+        <td style="font-weight:500;">${ens ? ens.nom + ' ' + ens.prenom : '-'}</td>
+        <td>${mat ? mat.intitule : '-'}</td>
+        <td><span class="tag ${typeTag}">${h.type}</span></td>
+        <td>${h.duree}h</td>
+        <td style="font-weight:600; color:var(--accent);">${eq}h</td>
+        <td>${h.salle || '-'}</td>
+        <td style="color:var(--fg-muted); max-width:150px; overflow:hidden; text-overflow:ellipsis;">${h.observations || '-'}</td>
+        <td><div style="display:flex;gap:6px;">${actions}</div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ===== DEPASSEMENTS =====
+  function renderDepassements() {
+    const depassements = appData.enseignants.map(e => {
+      const total = getTotalHeuresEqTD(e.id);
+      const contrat = getHeuresContrat(e);
+      const excess = total - contrat;
+      return { ...e, total, contrat, excess };
+    }).filter(e => e.excess > 0).sort((a, b) => b.excess - a.excess);
+
+    const container = document.getElementById('depassementsContent');
+    if (depassements.length === 0) {
+      container.innerHTML = `<div class="card"><div class="card-body"><div class="empty-state"><i class="fas fa-check-circle" style="color:var(--accent);"></i><h4>Aucun depassement</h4><p>Tous les enseignants sont dans leur volume horaire contractuel</p></div></div></div>`;
+      return;
+    }
+
+    let html = `<div class="stats-grid stagger">
+      <div class="stat-card">
+        <div class="sc-icon red"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="sc-value">${depassements.length}</div>
+        <div class="sc-label">Enseignant(s) en depassement</div>
+        <div class="sc-glow" style="background:var(--danger);"></div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-icon amber"><i class="fas fa-hourglass-half"></i></div>
+        <div class="sc-value">${depassements.reduce((s, e) => s + e.excess, 0)}h</div>
+        <div class="sc-label">Total heures depassees</div>
+        <div class="sc-glow" style="background:var(--accent-secondary);"></div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-icon red"><i class="fas fa-coins"></i></div>
+        <div class="sc-value">${formatMoney(depassements.reduce((s, e) => s + e.excess * e.tauxHoraire, 0))}</div>
+        <div class="sc-label">Cout total depassements</div>
+        <div class="sc-glow" style="background:var(--danger);"></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-header"><h3>Detail des depassements</h3></div><div class="card-body">`;
+
+    depassements.forEach(e => {
+      const pct = Math.round((e.total / e.contrat) * 100);
+      html += `<div class="alert-row">
+        <i class="fas fa-user-clock"></i>
+        <div class="ar-info">
+          <div class="name">${e.nom} ${e.prenom}</div>
+          <div class="detail">${e.departement} &middot; ${e.grade} &middot; ${e.total}h / ${e.contrat}h (${pct}%)</div>
+        </div>
+        <div class="ar-excess">+${e.excess}h</div>
+      </div>`;
+    });
+
+    html += `</div></div>`;
+    container.innerHTML = html;
+  }
+
+  // ===== ETATS DE PAIEMENT =====
+  function renderPaiements() {
+    const search = (document.getElementById('searchPaiement').value || '').toLowerCase();
+
+    let list = appData.enseignants.map(e => {
+      const total = getTotalHeuresEqTD(e.id);
+      const contrat = getHeuresContrat(e);
+      const hc = Math.max(0, total - contrat);
+      const hNormales = Math.min(total, contrat);
+      const montantHC = hc * e.tauxHoraire;
+      return { ...e, total, contrat, hc, hNormales, montantHC };
+    }).filter(e => {
+      if (search && !(e.nom.toLowerCase().includes(search) || e.prenom.toLowerCase().includes(search))) return false;
+      return true;
+    }).sort((a, b) => b.montantHC - a.montantHC);
+
+    const tbody = document.getElementById('paiementsTableBody');
+    if (list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fas fa-file-invoice"></i><h4>Aucun etat</h4></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(e => {
+      const statutTag = e.hc > 0
+        ? '<span class="tag tag-red">Depassement</span>'
+        : '<span class="tag tag-green">Normal</span>';
+      return `<tr>
+        <td style="font-weight:600;">${e.nom} ${e.prenom}</td>
+        <td><span class="tag ${{'Professeur':'tag-blue','Maitre-Assistant':'tag-green','Assistant':'tag-amber','Autres':'tag-gray'}[e.grade]||'tag-gray'}">${e.grade}</span></td>
+        <td style="font-family:'Space Grotesk',sans-serif;">${e.contrat}h</td>
+        <td style="font-family:'Space Grotesk',sans-serif;">${e.hNormales}h</td>
+        <td style="font-family:'Space Grotesk',sans-serif; font-weight:700; color:${e.hc > 0 ? 'var(--danger)' : 'var(--fg-muted)'};">${e.hc}h</td>
+        <td>${formatMoney(e.tauxHoraire)}</td>
+        <td style="font-family:'Space Grotesk',sans-serif; font-weight:700; color:${e.montantHC > 0 ? 'var(--accent-secondary)' : 'var(--fg-muted)'};">${e.montantHC > 0 ? formatMoney(e.montantHC) : '-'}</td>
+        <td>${statutTag}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function exportPaiementsExcel() {
+    // Simulation d'export CSV (ouvrable dans Excel)
+    let csv = 'Enseignant;Grade;Statut;Departement;Heures Contrat;Heures Normales;Heures Complementaires;Taux Horaire;Montant HC\n';
+    appData.enseignants.forEach(e => {
+      const total = getTotalHeuresEqTD(e.id);
+      const contrat = getHeuresContrat(e);
+      const hc = Math.max(0, total - contrat);
+      csv += `${e.nom} ${e.prenom};${e.grade};${e.statut};${e.departement};${contrat};${Math.min(total, contrat)};${hc};${e.tauxHoraire};${hc * e.tauxHoraire}\n`;
+    });
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'etats_paiement_' + new Date().toISOString().split('T')[0] + '.csv';
+    link.click();
+    addLog('green', 'Export Excel des etats de paiement');
+    showToast('Fichier Excel telecharge', 'success');
+  }
+
+  function exportPaiementsPDF() {
+    // Simulation d'export PDF (texte brut téléchargeable)
+    let text = 'ETAT GLOBAL DES HEURES - ' + new Date().toLocaleDateString('fr-FR') + '\n';
+    text += '='.repeat(80) + '\n\n';
+    appData.enseignants.forEach(e => {
+      const total = getTotalHeuresEqTD(e.id);
+      const contrat = getHeuresContrat(e);
+      const hc = Math.max(0, total - contrat);
+      text += `${e.nom} ${e.prenom} (${e.grade} - ${e.statut})\n`;
+      text += `  Departement : ${e.departement}\n`;
+      text += `  Heures contrat : ${contrat}h | Total eq. TD : ${total}h | HC : ${hc}h\n`;
+      text += `  Taux horaire : ${e.tauxHoraire} FCFA | Montant HC : ${formatMoney(hc * e.tauxHoraire)}\n\n`;
+    });
+    text += '='.repeat(80) + '\n';
+    text += `Total heures complementaires : ${appData.enseignants.reduce((s, e) => s + getHeuresComplementaires(e.id), 0)}h\n`;
+    text += `Cout total HC : ${formatMoney(appData.enseignants.reduce((s, e) => s + getHeuresComplementaires(e.id) * e.tauxHoraire, 0))}\n`;
+
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'etats_paiement_' + new Date().toISOString().split('T')[0] + '.txt';
+    link.click();
+    addLog('green', 'Export PDF des etats de paiement');
+    showToast('Fichier PDF telecharge', 'success');
+  }
+
+  // ===== PARAMETRES =====
+  function loadSettings() {
+    const s = appData.settings;
+    document.getElementById('tauxAssistant').value = s.tauxHoraire['Assistant'];
+    document.getElementById('tauxMaitreAssistant').value = s.tauxHoraire['Maitre-Assistant'];
+    document.getElementById('tauxProfesseur').value = s.tauxHoraire['Professeur'];
+    document.getElementById('tauxAutres').value = s.tauxHoraire['Autres'];
+    document.getElementById('eqCM').value = s.equivalences.CM;
+    document.getElementById('eqTD').value = s.equivalences.TD;
+    document.getElementById('eqTP').value = s.equivalences.TP;
+    document.getElementById('heuresPermanent').value = s.heuresContrat['Permanent'];
+    document.getElementById('heuresVacataire').value = s.heuresContrat['Vacataire'];
+  }
+
+  function updateSettings() { /* Les valeurs sont lues directement dans saveSettings */ }
+
+  function saveSettings() {
+    appData.settings.tauxHoraire = {
+      'Assistant': parseInt(document.getElementById('tauxAssistant').value) || 2500,
+      'Maitre-Assistant': parseInt(document.getElementById('tauxMaitreAssistant').value) || 3500,
+      'Professeur': parseInt(document.getElementById('tauxProfesseur').value) || 5000,
+      'Autres': parseInt(document.getElementById('tauxAutres').value) || 2000
+    };
+    appData.settings.equivalences = {
+      CM: parseFloat(document.getElementById('eqCM').value) || 1.5,
+      TD: parseFloat(document.getElementById('eqTD').value) || 1,
+      TP: parseFloat(document.getElementById('eqTP').value) || 0.75
+    };
+    appData.settings.heuresContrat = {
+      'Permanent': parseInt(document.getElementById('heuresPermanent').value) || 350,
+      'Vacataire': parseInt(document.getElementById('heuresVacataire').value) || 200
+    };
+    saveData();
+    addLog('amber', 'Parametres mis a jour');
+    showToast('Parametres enregistres avec succes', 'success');
+  }
+
+  // ===== JOURNAL =====
+  function renderJournal() {
+    const container = document.getElementById('journalContent');
+    if (appData.logs.length === 0) {
+      container.innerHTML = `<div class="empty-state"><i class="fas fa-scroll"></i><h4>Journal vide</h4></div>`;
+      return;
+    }
+    container.innerHTML = appData.logs.map(l => `
+      <div class="log-item">
+        <div class="log-dot ${l.type}"></div>
+        <div><div class="log-text">${l.text}</div><div class="log-time">${l.time}</div></div>
+      </div>
+    `).join('');
+  }
+
+  function clearLogs() {
+    appData.logs = [];
+    saveData();
+    renderJournal();
+    showToast('Journal vide', 'info');
+  }
+
+  // ===== TABLEAU DE BORD =====
+  function renderDashboard() {
+    const totalEnseignants = appData.enseignants.length;
+    const totalHeures = appData.heures.reduce((s, h) => s + getHeuresEqTD(h.type, h.duree), 0);
+    const totalHC = appData.enseignants.reduce((s, e) => s + getHeuresComplementaires(e.id), 0);
+    const depassements = appData.enseignants.filter(e => getHeuresComplementaires(e.id) > 0).length;
+
+    document.getElementById('dashStats').innerHTML = `
+      <div class="stat-card">
+        <div class="sc-icon green"><i class="fas fa-users"></i></div>
+        <div class="sc-value">${totalEnseignants}</div>
+        <div class="sc-label">Enseignants</div>
+        <div class="sc-trend up"><i class="fas fa-arrow-up"></i> Actifs</div>
+        <div class="sc-glow" style="background:var(--accent);"></div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-icon blue"><i class="fas fa-clock"></i></div>
+        <div class="sc-value">${totalHeures}h</div>
+        <div class="sc-label">Heures totales eq. TD</div>
+        <div class="sc-trend up"><i class="fas fa-arrow-up"></i> ${appData.heures.length} saisies</div>
+        <div class="sc-glow" style="background:#3b82f6;"></div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-icon amber"><i class="fas fa-hourglass-half"></i></div>
+        <div class="sc-value">${totalHC}h</div>
+        <div class="sc-label">Heures complementaires</div>
+        <div class="sc-trend ${totalHC > 0 ? 'down' : 'up'}"><i class="fas fa-${totalHC > 0 ? 'arrow-up' : 'check'}"></i> ${totalHC > 0 ? 'A surveiller' : 'RAS'}</div>
+        <div class="sc-glow" style="background:var(--accent-secondary);"></div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-icon ${depassements > 0 ? 'red' : 'green'}"><i class="fas fa-triangle-exclamation"></i></div>
+        <div class="sc-value">${depassements}</div>
+        <div class="sc-label">Depassements</div>
+        <div class="sc-trend ${depassements > 0 ? 'down' : 'up'}"><i class="fas fa-${depassements > 0 ? 'exclamation' : 'check'}"></i> ${depassements > 0 ? 'Attention' : 'Aucun'}</div>
+        <div class="sc-glow" style="background:${depassements > 0 ? 'var(--danger)' : 'var(--accent)'};"></div>
+      </div>
+    `;
+
+    // Dépassements récents
+    const deps = appData.enseignants
+      .map(e => ({ ...e, excess: getHeuresComplementaires(e.id) }))
+      .filter(e => e.excess > 0)
+      .sort((a, b) => b.excess - a.excess)
+      .slice(0, 3);
+
+    document.getElementById('dashDepassements').innerHTML = deps.length === 0
+      ? '<div style="text-align:center; padding:20px; color:var(--fg-dim); font-size:13px;"><i class="fas fa-check-circle" style="color:var(--accent); margin-right:6px;"></i>Aucun depassement</div>'
+      : deps.map(e => `<div class="alert-row" style="margin-bottom:6px;">
+          <i class="fas fa-user-clock" style="font-size:14px;"></i>
+          <div class="ar-info"><div class="name" style="font-size:13px;">${e.nom} ${e.prenom}</div><div class="detail">${e.departement}</div></div>
+          <div class="ar-excess" style="font-size:14px;">+${e.excess}h</div>
+        </div>`).join('');
+
+    // Dernières activités
+    document.getElementById('dashLogs').innerHTML = appData.logs.slice(0, 5).map(l => `
+      <div class="log-item" style="padding:8px 0;">
+        <div class="log-dot ${l.type}"></div>
+        <div><div class="log-text" style="font-size:12px;">${l.text}</div><div class="log-time">${l.time}</div></div>
+      </div>
+    `).join('');
+
+    renderCharts();
+  }
+
+  function renderCharts() {
+    // Détruire les anciens graphiques
+    Object.values(charts).forEach(c => c.destroy());
+    charts = {};
+
+    const chartColors = {
+      green: '#10b981', amber: '#f59e0b', red: '#ef4444', blue: '#3b82f6',
+      purple: '#8b5cf6', pink: '#ec4899', cyan: '#06b6d4'
+    };
+    const chartDefaults = {
+      color: '#7a8599',
+      borderColor: '#1f2937',
+      font: { family: "'DM Sans', sans-serif" }
+    };
+    Chart.defaults.color = chartDefaults.color;
+    Chart.defaults.borderColor = chartDefaults.borderColor;
+    Chart.defaults.font.family = chartDefaults.font.family;
+
+    // Heures par département
+    const depts = {};
+    appData.heures.forEach(h => {
+      const ens = getEnseignant(h.enseignantId);
+      if (ens) {
+        depts[ens.departement] = (depts[ens.departement] || 0) + getHeuresEqTD(h.type, h.duree);
+      }
+    });
+    const deptLabels = Object.keys(depts);
+    const deptValues = Object.values(depts);
+    const deptColors = [chartColors.green, chartColors.blue, chartColors.amber, chartColors.purple, chartColors.cyan, chartColors.pink];
+
+    charts.dept = new Chart(document.getElementById('chartDept'), {
+      type: 'bar',
+      data: {
+        labels: deptLabels,
+        datasets: [{
+          data: deptValues,
+          backgroundColor: deptLabels.map((_, i) => deptColors[i % deptColors.length] + '33'),
+          borderColor: deptLabels.map((_, i) => deptColors[i % deptColors.length]),
+          borderWidth: 2,
+          borderRadius: 6,
+          barThickness: 40
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { callback: v => v + 'h' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    // Évolution mensuelle
+    const months = {};
+    appData.heures.forEach(h => {
+      const m = h.date.substring(0, 7); // YYYY-MM
+      months[m] = (months[m] || 0) + getHeuresEqTD(h.type, h.duree);
+    });
+    const sortedMonths = Object.keys(months).sort();
+    const monthLabels = sortedMonths.map(m => {
+      const [y, mo] = m.split('-');
+      return new Date(y, mo - 1).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+    });
+
+    charts.monthly = new Chart(document.getElementById('chartMonthly'), {
+      type: 'line',
+      data: {
+        labels: monthLabels,
+        datasets: [{
+          data: sortedMonths.map(m => months[m]),
+          borderColor: chartColors.green,
+          backgroundColor: chartColors.green + '15',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: chartColors.green,
+          pointBorderColor: '#181d28',
+          pointBorderWidth: 3,
+          pointRadius: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { callback: v => v + 'h' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    // Répartition CM/TD/TP
+    const typeCounts = { CM: 0, TD: 0, TP: 0 };
+    appData.heures.forEach(h => { typeCounts[h.type] = (typeCounts[h.type] || 0) + h.duree; });
+
+    charts.type = new Chart(document.getElementById('chartType'), {
+      type: 'doughnut',
+      data: {
+        labels: ['CM', 'TD', 'TP'],
+        datasets: [{
+          data: [typeCounts.CM, typeCounts.TD, typeCounts.TP],
+          backgroundColor: [chartColors.blue + '88', chartColors.green + '88', chartColors.amber + '88'],
+          borderColor: [chartColors.blue, chartColors.green, chartColors.amber],
+          borderWidth: 2,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10, font: { size: 13 } }
+          }
+        }
+      }
+    });
+  }
+
+  // ===== BADGES NAVIGATION =====
+  function updateNavBadges() {
+    document.getElementById('navEnseignantCount').textContent = appData.enseignants.length;
+    document.getElementById('navDepassementCount').textContent =
+      appData.enseignants.filter(e => getHeuresComplementaires(e.id) > 0).length;
+  }
+
+  // ===== RAFRAÎCHISSEMENT GLOBAL =====
+  function refreshAll() {
+    updateNavBadges();
+    renderDashboard();
+  }
+
+  // ===== RESPONSIVE =====
+  function checkResponsive() {
+    const menuBtn = document.getElementById('menuBtn');
+    if (window.innerWidth <= 768) {
+      menuBtn.style.display = 'flex';
+    } else {
+      menuBtn.style.display = 'none';
+      document.getElementById('sidebar').classList.remove('mobile-open');
+    }
+  }
+  window.addEventListener('resize', checkResponsive);
+
+  // ===== INITIALISATION =====
+  loadData();
+  checkResponsive();
+
+  // Auto-connexion pour la démo (commenter pour désactiver)
+  // handleLogin();
+</script>
+</body>
+</html>
