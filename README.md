@@ -2,6 +2,6 @@
 Gestion des heures enseignants
 page de login
 # Identifiant
-admin
+admin(en anglais)
 # Mot de passe
-admin
+admin(en anglais)
